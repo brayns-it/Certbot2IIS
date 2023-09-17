@@ -1,6 +1,7 @@
 ﻿using Microsoft.Web.Administration;
 using System.Security.Cryptography.X509Certificates;
 using CommandLine;
+using CommandLine.Text;
 
 namespace Certbot2IIS
 {
@@ -26,7 +27,26 @@ namespace Certbot2IIS
 
         static void Main(string[] args)
         {
-            Parser.Default.ParseArguments<Options>(args).WithParsed(RunOptions);
+            var parser = new Parser(with => with.HelpWriter = null);
+            var parserResult = parser.ParseArguments<Options>(args);
+            parserResult
+              .WithParsed<Options>(options => RunOptions(options))
+              .WithNotParsed(errs => DisplayHelp(parserResult));
+        }
+
+        static void DisplayHelp<T>(ParserResult<T> result)
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
+
+            var helpText = HelpText.AutoBuild(result, h =>
+            {
+                h.AdditionalNewLineAfterOption = false;
+                h.Heading = "Certbot2IIS version " + fvi.FileVersion;
+                h.Copyright = "Copyright 2023 Brayns.it"; 
+                return HelpText.DefaultParsingErrorsHandler(result, h);
+            }, e => e);
+            Console.WriteLine(helpText);
         }
 
         static void RunOptions(Options opts)
