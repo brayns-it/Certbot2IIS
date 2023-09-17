@@ -1,0 +1,6 @@
+/bin
+/obj
+/.vs
+/packages
+/Certbot2IIS.csproj.user
+/Properties/PublishProfiles
