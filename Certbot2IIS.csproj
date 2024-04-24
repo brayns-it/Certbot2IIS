@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <Authors>Brayns.it</Authors>
     <Company>Brayns.it</Company>
-    <FileVersion>1.0.30917.0</FileVersion>
+    <FileVersion>1.0.40401.0</FileVersion>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
 

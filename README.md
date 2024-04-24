@@ -1,11 +1,13 @@
 ﻿# Certbot2IIS
 Certbot2IIS is a tool to programmatically update IIS certificate generated 
-by Certbot.
+by Certbot / win-acme.
+
+https://www.win-acme.com/
 
 # Usage
 ```
-Certbot2IIS 1.0.0
-Copyright (C) 2023 Brayns.it
+Certbot2IIS 1.0.40401.0
+Copyright (C) 2023-2024 Brayns.it
 
 ERROR(S):
   Required option 'c, certfile' is missing.

@@ -43,14 +43,14 @@ namespace Certbot2IIS
             {
                 h.AdditionalNewLineAfterOption = false;
                 h.Heading = "Certbot2IIS version " + fvi.FileVersion;
-                h.Copyright = "Copyright 2023 Brayns.it"; 
+                h.Copyright = "Copyright 2023-2024 Brayns.it";
                 return HelpText.DefaultParsingErrorsHandler(result, h);
             }, e => e);
             Console.WriteLine(helpText);
         }
 
         static void RunOptions(Options opts)
-        { 
+        {
             X509Certificate2 newCert = X509Certificate2.CreateFromPemFile(opts.CertFile, opts.KeyFile);
             newCert.FriendlyName = opts.FriendlyName;
             newCert = new X509Certificate2(newCert.Export(X509ContentType.Pfx), "", X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet);
@@ -75,26 +75,44 @@ namespace Certbot2IIS
 
             store.Close();
 
-            bool doCommit = false;
-            ServerManager serverManager = new ServerManager();
-            foreach (var b in serverManager.Sites[opts.SiteName].Bindings)
+            if (!SetSiteCertificate(opts.SiteName, opts.HostName, newCert))
+                if (!SetSiteCertificate(opts.SiteName, opts.HostName, newCert))
+                    throw new Exception("Unable to set certificate");
+        }
+
+        private static bool SetSiteCertificate(string siteName, string hostName, X509Certificate2 certificate)
+        {
+            try
             {
-                if (b.Protocol.ToLower() == "https")
+                bool doCommit = false;
+                ServerManager serverManager = new ServerManager();
+
+                foreach (var b in serverManager.Sites[siteName].Bindings)
                 {
-                    if ((opts.HostName.Length == 0) || b.Host.Equals(opts.HostName, StringComparison.OrdinalIgnoreCase))
+                    if (b.Protocol.ToLower() == "https")
                     {
-                        if (!b.CertificateHash.SequenceEqual(newCert.GetCertHash()))
+                        if ((hostName.Length == 0) || b.Host.Equals(hostName, StringComparison.OrdinalIgnoreCase))
                         {
-                            b.CertificateStoreName = "My";
-                            b.CertificateHash = newCert.GetCertHash();
-                            doCommit = true;
+                            if ((b.CertificateHash == null) || (!b.CertificateHash.SequenceEqual(certificate.GetCertHash())))
+                            {
+                                b.CertificateStoreName = "My";
+                                b.CertificateHash = certificate.GetCertHash();
+                                b.BindingInformation = b.BindingInformation;    // force IIS to bind
+                                doCommit = true;
+                            }
                         }
                     }
                 }
-            }
 
-            if (doCommit)
-                serverManager.CommitChanges();
+                if (doCommit)
+                    serverManager.CommitChanges();
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
