@@ -23,6 +23,9 @@ namespace Certbot2IIS
 
             [Option('h', "hostname", Required = false, HelpText = "IIS site binding site name")]
             public string HostName { get; set; } = "";
+
+            [Option('p', "port", Required = false, HelpText = "IIS site binding port")]
+            public int Port { get; set; } = 0;
         }
 
         static void Main(string[] args)
@@ -75,12 +78,12 @@ namespace Certbot2IIS
 
             store.Close();
 
-            if (!SetSiteCertificate(opts.SiteName, opts.HostName, newCert))
-                if (!SetSiteCertificate(opts.SiteName, opts.HostName, newCert))
+            if (!SetSiteCertificate(opts.SiteName, opts.HostName, opts.Port, newCert))
+                if (!SetSiteCertificate(opts.SiteName, opts.HostName, opts.Port, newCert))
                     throw new Exception("Unable to set certificate");
         }
 
-        private static bool SetSiteCertificate(string siteName, string hostName, X509Certificate2 certificate)
+        private static bool SetSiteCertificate(string siteName, string hostName, int port, X509Certificate2 certificate)
         {
             try
             {
@@ -91,7 +94,8 @@ namespace Certbot2IIS
                 {
                     if (b.Protocol.ToLower() == "https")
                     {
-                        if ((hostName.Length == 0) || b.Host.Equals(hostName, StringComparison.OrdinalIgnoreCase))
+                        if (((hostName.Length == 0) || b.Host.Equals(hostName, StringComparison.OrdinalIgnoreCase)) &&
+                            ((port == 0) || (b.EndPoint.Port == port)))
                         {
                             if ((b.CertificateHash == null) || (!b.CertificateHash.SequenceEqual(certificate.GetCertHash())))
                             {
